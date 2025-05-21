@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <title>Kosárlabda játék</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      transition: background-image 0.5s ease-in-out;
+    }
+
+    body.game-running {
+      background: url('háttér1.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    
+    body.game-over {
+      background: url('háttér2.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    #score, #timer {
+      position: absolute;
+      top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px black;
+      transition: color 0.3s;
+    }
+
+    #score { left: 10px; }
+    #timer { right: 10px; }
+
+    .basketball {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background-image: url('eec61c9a-a64a-4457-b4f3-708548b81035.png');
+      background-size: cover;
+      cursor: pointer;
+      display: none;
+    }
+    
+    .cup {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background-image: url('kupa.png');
+      background-size: cover;
+      cursor: pointer;
+      display: none;
+    }
+
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      text-shadow: 2px 2px 5px black;
+      display: none;
+    }
+
+    #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background-color: #ff0066;
+      color: white;
+      box-shadow: 0 0 10px black;
+    }
+    
+    .score-negative {
+      color: #8B0000 !important;
+    }
+    
+    .timer-warning {
+      animation: blink 1s infinite;
+      color: #FF8C00 !important;
+    }
+    
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="game-running">
+
+<div id="score">Pontszám: 0</div>
+<div id="timer">Hátralévő idő: 40 mp</div>
+
+<div id="basketball1" class="basketball"></div>
+<div id="basketball2" class="basketball"></div>
+<div id="basketball3" class="basketball"></div>
+<div id="cup" class="cup"></div>
+
+<div id="gameOver">
+  <div id="finalScore">Játék vége! Elért pontszám: 0</div>
+  <button id="restartBtn">Újra játszom</button>
+</div>
+
+<script>
+  const scoreDisplay = document.getElementById('score');
+  const timerDisplay = document.getElementById('timer');
+  const gameOverDisplay = document.getElementById('gameOver');
+  const finalScoreText = document.getElementById('finalScore');
+  const restartBtn = document.getElementById('restartBtn');
+  const cup = document.getElementById('cup');
+  const body = document.body;
+
+  const balls = [
+    document.getElementById('basketball1'),
+    document.getElementById('basketball2'),
+    document.getElementById('basketball3')
+  ];
+
+  let score = 0;
+  let timeLeft = 40;
+  let gameRunning = true;
+  let moveInterval, timerInterval, cupInterval;
+  let cupActive = false;
+  let activeElements = new Set();
+
+  function getBallDisplayTime() {
+    if (timeLeft >= 30) return 1800;      // 40-30 mp: 1.8 mp
+    if (timeLeft >= 20) return 1400;      // 29-20 mp: 1.4 mp
+    if (timeLeft >= 8) return 1100;       // 19-8 mp: 1.1 mp
+    return 800;                           // 8-0 mp: 0.8 mp
+  }
+
+  function updateScore(points) {
+    score += points;
+    if (score < 0) score = 0;
+    scoreDisplay.textContent = 'Pontszám: ' + score;
+    
+    if (points < 0) {
+      scoreDisplay.classList.add('score-negative');
+      setTimeout(() => {
+        scoreDisplay.classList.remove('score-negative');
+      }, 500);
+    }
+  }
+
+  function showBall(ball) {
+    if (!gameRunning || activeElements.has(ball)) return;
+    
+    const maxX = window.innerWidth - 80;
+    const maxY = window.innerHeight - 80;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+    
+    ball.style.left = `${x}px`;
+    ball.style.top = `${y}px`;
+    ball.style.display = 'block';
+    activeElements.add(ball);
+    
+    setTimeout(() => {
+      if (ball.style.display !== 'none') {
+        ball.style.display = 'none';
+        activeElements.delete(ball);
+      }
+    }, getBallDisplayTime());
+  }
+
+  function moveBalls() {
+    if (!gameRunning) return;
+    
+    balls.forEach(ball => {
+      showBall(ball);
+    });
+
+    clearInterval(moveInterval);
+    moveInterval = setInterval(() => {
+      balls.forEach(ball => {
+        showBall(ball);
+      });
+    }, getBallDisplayTime() + 200);
+  }
+
+  function showCup() {
+    if (!gameRunning || cupActive) return;
+    
+    const maxX = window.innerWidth - 80;
+    const maxY = window.innerHeight - 80;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+    
+    cup.style.left = `${x}px`;
+    cup.style.top = `${y}px`;
+    cup.style.display = 'block';
+    cupActive = true;
+    activeElements.add(cup);
+    
+    setTimeout(() => {
+      if (cup.style.display !== 'none') {
+        cup.style.display = 'none';
+        cupActive = false;
+        activeElements.delete(cup);
+      }
+    }, 1300);
+  }
+
+  function handleClick(element, points, isCup = false) {
+    if (!gameRunning || !activeElements.has(element)) return;
+    
+    element.style.display = 'none';
+    activeElements.delete(element);
+    if (isCup) cupActive = false;
+    
+    updateScore(points);
+    if (isCup) {
+      timeLeft += 2;
+      updateTimer();
+    }
+  }
+
+  balls.forEach(ball => {
+    ball.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleClick(ball, 3);
+    });
+  });
+  
+  cup.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleClick(cup, 6, true);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!gameRunning) return;
+
+    const clickedOnObject = balls.some(ball => ball === e.target || ball.contains(e.target)) || 
+                          (cup === e.target || cup.contains(e.target));
+    if (!clickedOnObject) {
+      updateScore(-2);
+    }
+  });
+
+  function updateTimer() {
+    timerDisplay.textContent = 'Hátralévő idő: ' + timeLeft + ' mp';
+    timeLeft--;
+    
+    // Időzítő frissítése és színváltás
+    if (timeLeft <= 15) {
+      timerDisplay.classList.add('timer-warning');
+    } else {
+      timerDisplay.classList.remove('timer-warning');
+    }
+    
+    // Labdák sebességének frissítése az időhatárok átlépésekor
+    if ([30, 20, 8].includes(timeLeft)) {
+      clearInterval(moveInterval);
+      moveBalls();
+    }
+    
+    if (timeLeft < 0) {
+      endGame();
+    }
+  }
+
+  function endGame() {
+    gameRunning = false;
+    body.classList.remove('game-running');
+    body.classList.add('game-over');
+    balls.forEach(ball => ball.style.display = 'none');
+    cup.style.display = 'none';
+    clearInterval(moveInterval);
+    clearInterval(timerInterval);
+    clearInterval(cupInterval);
+    activeElements.clear();
+    finalScoreText.textContent = `Játék vége! Elért pontszám: ${score}`;
+    gameOverDisplay.style.display = 'block';
+    
+    setTimeout(() => {
+      if (confirm(`Játék vége! Pontszám: ${score}. Újra szeretnél játszani?`)) {
+        startGame();
+      }
+    }, 1000);
+  }
+
+  function startGame() {
+    body.classList.remove('game-over');
+    body.classList.add('game-running');
+    score = 0;
+    timeLeft = 40;
+    gameRunning = true;
+    cupActive = false;
+    activeElements.clear();
+    balls.forEach(ball => ball.style.display = 'none');
+    cup.style.display = 'none';
+    gameOverDisplay.style.display = 'none';
+    scoreDisplay.classList.remove('score-negative');
+    timerDisplay.classList.remove('timer-warning');
+    updateScore(0);
+    updateTimer();
+    moveBalls();
+    timerInterval = setInterval(updateTimer, 1000);
+    cupInterval = setInterval(showCup, 5000);
+  }
+
+  restartBtn.addEventListener('click', startGame);
+  window.onload = startGame;
+</script>
+
+</body>
+</html>
