@@ -36,8 +36,8 @@
 
     .basketball {
       position: absolute;
-      width: 130px;
-      height: 130px;
+      width: 80px;
+      height: 80px;
       background-image: url('eec61c9a-a64a-4457-b4f3-708548b81035.png');
       background-size: cover;
       cursor: pointer;
@@ -46,8 +46,8 @@
     
     .cup {
       position: absolute;
-      width: 150px;
-      height: 115px;
+      width: 80px;
+      height: 80px;
       background-image: url('kupa.png');
       background-size: cover;
       cursor: pointer;
@@ -98,7 +98,7 @@
 <body class="game-running">
 
 <div id="score">Pontszám: 0</div>
-<div id="timer">Hátralévő idő: 45 mp</div>
+<div id="timer">Hátralévő idő: 40 mp</div>
 
 <div id="basketball1" class="basketball"></div>
 <div id="basketball2" class="basketball"></div>
@@ -126,14 +126,14 @@
   ];
 
   let score = 0;
-  let timeLeft = 45;
+  let timeLeft = 40;
   let gameRunning = true;
   let moveInterval, timerInterval, cupInterval;
   let cupActive = false;
   let activeElements = new Set();
 
   function getBallDisplayTime() {
-    if (timeLeft >= 30) return 1800;      // 45-30 mp: 1.8 mp
+    if (timeLeft >= 30) return 1800;      // 40-30 mp: 1.8 mp
     if (timeLeft >= 20) return 1400;      // 29-20 mp: 1.4 mp
     if (timeLeft >= 8) return 1100;       // 19-8 mp: 1.1 mp
     return 800;                           // 8-0 mp: 0.8 mp
