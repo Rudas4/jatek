@@ -11,6 +11,11 @@
       transition: background-image 0.5s ease-in-out;
     }
 
+    body.start-screen {
+      background: url('háttér3.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    
     body.game-running {
       background: url('háttér1.jpg') no-repeat center center fixed;
       background-size: cover;
@@ -29,6 +34,7 @@
       color: white;
       text-shadow: 1px 1px 3px black;
       transition: color 0.3s;
+      display: none;
     }
 
     #score { left: 10px; }
@@ -88,6 +94,51 @@
       color: #FF8C00 !important;
     }
     
+    #startScreen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      text-align: center;
+      text-shadow: 2px 2px 5px black;
+      width: 80%;
+      max-width: 600px;
+    }
+    
+    #startScreen h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+    
+    #startScreen p {
+      font-size: 18px;
+      margin: 10px 0;
+      text-align: left;
+    }
+    
+    #startScreen ul {
+      text-align: left;
+      margin-left: 20px;
+    }
+    
+    #startBtn {
+      margin-top: 30px;
+      padding: 15px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background-color: #006400;
+      color: white;
+      box-shadow: 0 0 10px black;
+      font-weight: bold;
+    }
+    
+    #startBtn:hover {
+      background-color: #008000;
+    }
+    
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0.5; }
@@ -95,7 +146,7 @@
     }
   </style>
 </head>
-<body class="game-running">
+<body class="start-screen">
 
 <div id="score">Pontszám: 0</div>
 <div id="timer">Hátralévő idő: 40 mp</div>
@@ -110,6 +161,31 @@
   <button id="restartBtn">Újra játszom</button>
 </div>
 
+<div id="startScreen">
+  <h1>Kosárlabda játék</h1>
+  <p>Gyűjts minél több pontot a megjelenő kosárlabdák és kupák rákattintásával!</p>
+  
+  <p><strong>Pontozás:</strong></p>
+  <ul>
+    <li>Kosárlabda: +3 pont</li>
+    <li>Kupa: +6 pont és +2 másodperc az idődhöz</li>
+    <li>Mellé kattintás: -2 pont</li>
+  </ul>
+  
+  <p><strong>Játékidő:</strong><br>
+  40 másodperc</p>
+  
+  <p><strong>Nehézség:</strong><br>
+  Gyorsul a játék az idő múlásával (a labdák gyorsabban tűnnek el).</p>
+  
+  <p><strong>Játék vége:</strong><br>
+  Amikor lejár az idő. Az újrakezdéshez kattints a gombra!</p>
+  
+  <p>Jó szórakozást!</p>
+  
+  <button id="startBtn">Indítás</button>
+</div>
+
 <script>
   const scoreDisplay = document.getElementById('score');
   const timerDisplay = document.getElementById('timer');
@@ -117,6 +193,8 @@
   const finalScoreText = document.getElementById('finalScore');
   const restartBtn = document.getElementById('restartBtn');
   const cup = document.getElementById('cup');
+  const startScreen = document.getElementById('startScreen');
+  const startBtn = document.getElementById('startBtn');
   const body = document.body;
 
   const balls = [
@@ -127,7 +205,7 @@
 
   let score = 0;
   let timeLeft = 40;
-  let gameRunning = true;
+  let gameRunning = false;
   let moveInterval, timerInterval, cupInterval;
   let cupActive = false;
   let activeElements = new Set();
@@ -239,6 +317,7 @@
 
   document.addEventListener('click', (e) => {
     if (!gameRunning) return;
+    if (e.target === startBtn || e.target === restartBtn) return;
 
     const clickedOnObject = balls.some(ball => ball === e.target || ball.contains(e.target)) || 
                           (cup === e.target || cup.contains(e.target));
@@ -282,14 +361,15 @@
     finalScoreText.textContent = `Játék vége! Elért pontszám: ${score}`;
     gameOverDisplay.style.display = 'block';
     
-    //setTimeout(() => {
-      //if (confirm(`Játék vége! Pontszám: ${score}. Újra szeretnél játszani?`)) {
-        //startGame();
+    setTimeout(() => {
+      if (confirm(`Játék vége! Pontszám: ${score}. Újra szeretnél játszani?`)) {
+        startGame();
       }
     }, 1000);
   }
 
   function startGame() {
+    body.classList.remove('start-screen');
     body.classList.remove('game-over');
     body.classList.add('game-running');
     score = 0;
@@ -300,6 +380,9 @@
     balls.forEach(ball => ball.style.display = 'none');
     cup.style.display = 'none';
     gameOverDisplay.style.display = 'none';
+    startScreen.style.display = 'none';
+    scoreDisplay.style.display = 'block';
+    timerDisplay.style.display = 'block';
     scoreDisplay.classList.remove('score-negative');
     timerDisplay.classList.remove('timer-warning');
     updateScore(0);
@@ -309,8 +392,8 @@
     cupInterval = setInterval(showCup, 5000);
   }
 
+  startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
-  window.onload = startGame;
 </script>
 
 </body>
