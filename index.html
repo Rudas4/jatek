@@ -139,6 +139,19 @@
       background-color: #008000;
     }
     
+    #soundToggle {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: rgba(0,0,0,0.5);
+      color: white;
+    }
+    
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0.5; }
@@ -168,7 +181,7 @@
   <p><strong>Pontozás:</strong></p>
   <ul>
     <li>Kosárlabda: +3 pont</li>
-    <li>Kupa: +6 pont és +2 másodperc az idődhöz</li>
+    <li>Kupa: +6 pont és +2 másodperc az idődhez</li>
     <li>Mellé kattintás: -2 pont</li>
   </ul>
   
@@ -186,6 +199,8 @@
   <button id="startBtn">Indítás</button>
 </div>
 
+<button id="soundToggle">Hang be</button>
+
 <script>
   const scoreDisplay = document.getElementById('score');
   const timerDisplay = document.getElementById('timer');
@@ -195,6 +210,7 @@
   const cup = document.getElementById('cup');
   const startScreen = document.getElementById('startScreen');
   const startBtn = document.getElementById('startBtn');
+  const soundToggle = document.getElementById('soundToggle');
   const body = document.body;
 
   const balls = [
@@ -203,18 +219,42 @@
     document.getElementById('basketball3')
   ];
 
+  // Hangok létrehozása
+  const backgroundMusic = new Audio('background_music.mp3');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.3;
+  
+  const ballSound = new Audio('ball_sound.mp3');
+  ballSound.volume = 0.7;
+  
+  const cupSound = new Audio('cup_sound.mp3');
+  cupSound.volume = 0.7;
+
   let score = 0;
   let timeLeft = 40;
   let gameRunning = false;
   let moveInterval, timerInterval, cupInterval;
   let cupActive = false;
   let activeElements = new Set();
+  let soundOn = true;
+
+  // Hang be/ki kapcsoló
+  soundToggle.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundToggle.textContent = soundOn ? 'Hang be' : 'Hang ki';
+    
+    if (soundOn) {
+      backgroundMusic.play();
+    } else {
+      backgroundMusic.pause();
+    }
+  });
 
   function getBallDisplayTime() {
-    if (timeLeft >= 30) return 1800;      // 40-30 mp: 1.8 mp
-    if (timeLeft >= 20) return 1400;      // 29-20 mp: 1.4 mp
-    if (timeLeft >= 8) return 1100;       // 19-8 mp: 1.1 mp
-    return 800;                           // 8-0 mp: 0.8 mp
+    if (timeLeft >= 30) return 1800;
+    if (timeLeft >= 20) return 1400;
+    if (timeLeft >= 8) return 1100;
+    return 800;
   }
 
   function updateScore(points) {
@@ -297,6 +337,18 @@
     if (isCup) cupActive = false;
     
     updateScore(points);
+    
+    // Hanghatás lejátszása
+    if (soundOn) {
+      if (isCup) {
+        cupSound.currentTime = 0;
+        cupSound.play();
+      } else {
+        ballSound.currentTime = 0;
+        ballSound.play();
+      }
+    }
+    
     if (isCup) {
       timeLeft += 2;
       updateTimer();
@@ -317,7 +369,7 @@
 
   document.addEventListener('click', (e) => {
     if (!gameRunning) return;
-    if (e.target === startBtn || e.target === restartBtn) return;
+    if (e.target === startBtn || e.target === restartBtn || e.target === soundToggle) return;
 
     const clickedOnObject = balls.some(ball => ball === e.target || ball.contains(e.target)) || 
                           (cup === e.target || cup.contains(e.target));
@@ -330,14 +382,12 @@
     timerDisplay.textContent = 'Hátralévő idő: ' + timeLeft + ' mp';
     timeLeft--;
     
-    // Időzítő frissítése és színváltás
     if (timeLeft <= 15) {
       timerDisplay.classList.add('timer-warning');
     } else {
       timerDisplay.classList.remove('timer-warning');
     }
     
-    // Labdák sebességének frissítése az időhatárok átlépésekor
     if ([30, 20, 8].includes(timeLeft)) {
       clearInterval(moveInterval);
       moveBalls();
@@ -360,6 +410,10 @@
     activeElements.clear();
     finalScoreText.textContent = `Játék vége! Elért pontszám: ${score}`;
     gameOverDisplay.style.display = 'block';
+    
+    if (soundOn) {
+      backgroundMusic.pause();
+    }
     
     setTimeout(() => {
       if (confirm(`Játék vége! Pontszám: ${score}. Újra szeretnél játszani?`)) {
@@ -390,6 +444,11 @@
     moveBalls();
     timerInterval = setInterval(updateTimer, 1000);
     cupInterval = setInterval(showCup, 5000);
+    
+    if (soundOn) {
+      backgroundMusic.currentTime = 0;
+      backgroundMusic.play();
+    }
   }
 
   startBtn.addEventListener('click', startGame);
